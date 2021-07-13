@@ -1,12 +1,23 @@
 ## characterise efficiency of crispr enrichment
 ## nb co-ords are in hg38
 
+library(GenomicRanges)
+
+
+
+## plot coverage within target regions
+allGuides<-read.csv("../../Resources/SmokingEWAS/GuideRNAsFINAL.csv")
+
+## calc coverage by 
+targetRegions<-cbind(aggregate(allGuides$hg38, by = list(allGuides$Chr), min), aggregate(allGuides$hg38, by = list(allGuides$Chr), max)$x)
+
+
 ## define target regions from most extreme guides 
 targetGRanges<-GRanges(seqnames = paste0("chr", targetRegions[,1]), strand = "*", ranges = IRanges(start = targetRegions[,2], end = targetRegions[,3]))
 
 ## load aligned read details
 rl.files<-list.files("SumStats/", pattern = "_RL.txt")
-rl.stats<-lapply(paste0("SumStats/", rl.stats), read.table)
+rl.stats<-lapply(paste0("SumStats/", rl.files), read.table)
 
 ##convert into GRanges
 
