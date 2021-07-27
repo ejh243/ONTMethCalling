@@ -1,61 +1,22 @@
 ## compare DNAm values from ONT to Array values
+
+filterRD<-function(data, threshold){
+	return(data[which(data$called_sites/data$num_motifs_in_group > threshold),])
+}
+
 setwd("DNAmethylation/")
 
 files<-list.files("Nanopolish/", pattern = "_methylation_frequency.tsv", recursive=TRUE)
 
 ont.nano<-lapply(paste0("Nanopolish/",files), read.table, header = TRUE)
 
-## plot DNAm distribution and coverage
-
-pdf("Plots/HistogramDNAmAll.pdf", height = 5, width = 10)
-par(mfrow = c(1,2))
-hist(ont.nano[[1]]$methylated_frequency, xlab = "% DNA methylation", ylab = "Number of Regions", main = "Sample 1")
-hist(ont.nano[[2]]$methylated_frequency, xlab = "% DNA methylation", ylab = "Number of Regions", main = "Sample 2")
-dev.off()
-
-pdf("Plots/HistogramReadDepthAll.pdf", height = 5, width = 10)
-par(mfrow = c(1,2))
-hist(ont.nano[[1]]$called_sites, xlab = "Number of Reads*CpGs", ylab = "Number of Regions", main = "Sample 1", breaks = seq(0,660, 10))
-hist(ont.nano[[2]]$called_sites, xlab = "Number of Reads*CpGs", ylab = "Number of Regions", main = "Sample 2", breaks = seq(0,660, 10))
-
-par(mfrow = c(1,2))
-hist(ont.nano[[1]]$called_sites, xlab = "Number of Reads*CpGs", ylab = "Number of Regions", main = "Sample 1", breaks = seq(0,660, 1), xlim = c(0,10))
-hist(ont.nano[[2]]$called_sites, xlab = "Number of Reads*CpGs", ylab = "Number of Regions", main = "Sample 2", breaks = seq(0,660, 1), xlim = c(0,10))
-
-
-par(mfrow = c(1,2))
-hist(ont.nano[[1]]$called_sites/ont.nano[[1]]$num_motifs_in_group, xlab = "Number of Reads", ylab = "Number of Regions", main = "Sample 1", breaks = seq(0,660, 1), xlim = c(0,10))
-hist(ont.nano[[2]]$called_sites/ont.nano[[2]]$num_motifs_in_group, xlab = "Number of Reads", ylab = "Number of Regions", main = "Sample 2", breaks = seq(0,660, 1), xlim = c(0,10))
-dev.off()
-
-
-## to speed up comparison, start by removing anything with less than 5 reads.
-filterRD<-function(data, threshold){
-	return(data[which(data$called_sites > threshold),])
-}
-
-ont.nano.filt<-lapply(ont.nano, filterRD, 5)
-
-
-pdf("Plots/HistogramDNAmAllRD5.pdf", height = 5, width = 10)
-par(mfrow = c(1,2))
-hist(ont.nano.filt[[1]]$methylated_frequency, xlab = "% DNA methylation", ylab = "Number of Regions", main = "Sample 1")
-hist(ont.nano.filt[[2]]$methylated_frequency, xlab = "% DNA methylation", ylab = "Number of Regions", main = "Sample 2")
-dev.off()
+## only consider CpGs with at least 10 reads.
+ont.nano.filt<-lapply(ont.nano, filterRD, 10)
 
 ## convert to GRanges
-sam1<-GRanges(seqnames = ont.nano.filt[[1]]$chromosome, strand = "*", ranges = IRanges(start = ont.nano.filt[[1]]$start, end = ont.nano.filt[[1]]$end), DNAm = ont.nano.filt[[1]]$methylated_frequency, Reads = ont.nano.filt[[1]]$called_sites, Coverage = ont.nano.filt[[1]]$called_sites/ont.nano.filt[[1]]$num_motifs_in_group)
+sam1<-GRanges(seqnames = ont.nano.filt[[1]]$chromosome, strand = "*", ranges = IRanges(start = ont.nano.filt[[1]]$start, end = ont.nano.filt[[1]]$end), DNAm = ont.nano.filt[[1]]$methylated_frequency, Reads = ont.nano.filt[[1]]$called_sites, Coverage = ont.nano.filt[[1]]$called_sites/ont.nano.filt[[1]]$num_motifs_in_group, nCpG = ont.nano.filt[[1]]$num_motifs_in_group)
 
-sam2<-GRanges(seqnames = ont.nano.filt[[2]]$chromosome, strand = "*", ranges = IRanges(start = ont.nano.filt[[2]]$start, end = ont.nano.filt[[2]]$end), DNAm = ont.nano.filt[[2]]$methylated_frequency, Reads = ont.nano.filt[[2]]$called_sites, Coverage = ont.nano.filt[[2]]$called_sites/ont.nano.filt[[2]]$num_motifs_in_group)
-
-### how many overlapping sites GW?
-sharedSites<-findOverlaps(sam1, sam2)
-
-pdf("Plots/ScatterplotDNAmGenomewide.pdf")
-plot(sam1$DNAm[queryHits(sharedSites)], sam2$DNAm[subjectHits(sharedSites)], pch = 16, xlab = "Sample 1", ylab = "Sample 2", main = "CpGs with > 5 reads")
-dev.off()
-
-
+sam2<-GRanges(seqnames = ont.nano.filt[[2]]$chromosome, strand = "*", ranges = IRanges(start = ont.nano.filt[[2]]$start, end = ont.nano.filt[[2]]$end), DNAm = ont.nano.filt[[2]]$methylated_frequency, Reads = ont.nano.filt[[2]]$called_sites, Coverage = ont.nano.filt[[2]]$called_sites/ont.nano.filt[[2]]$num_motifs_in_group, nCpG = ont.nano.filt[[2]]$num_motifs_in_group)
 
 ## focus in on target regions
 
@@ -70,10 +31,13 @@ inTargets2<-subsetByOverlaps(sam2, targetGRanges)
 
 ### how many overlapping sites ?
 sharedSites<-findOverlaps(inTargets1, inTargets2)
+allCpGs<-union(inTargets1, inTargets2)
 
-pdf("Plots/ScatterplotDNAmInCRISPRRegions.pdf")
-plot(inTargets1$DNAm[queryHits(sharedSites)], inTargets2$DNAm[subjectHits(sharedSites)], pch = 16, xlab = "Sample 1", ylab = "Sample 2", main = "CpGs with > 5 reads")
-dev.off()
+
+aggregate(inTargets1$nCpG, by = list(as.character(seqnames(inTargets1))), sum)
+aggregate(inTargets2$nCpG, by = list(as.character(seqnames(inTargets2))), sum)
+aggregate(inTargets1$nCpG[queryHits(sharedSites)], by = list(as.character(seqnames(inTargets1[queryHits(sharedSites)]))), sum)
+
 
 ## first genome-wide correlations and error metrics
 load("../Resources/SmokingEWAS/ArrayData.rda")
@@ -81,6 +45,22 @@ load("../Resources/SmokingEWAS/ArrayData.rda")
 probeAnno<-read.table("/gpfs/mrc0/projects/Research_Project-MRC190311/References/EPICArray/EPIC.anno.GRCh38.tsv", header = TRUE, fill = TRUE)
 probeAnno<-probeAnno[match(rownames(smokebetas), probeAnno$probeID),]
 arrayData<-GRanges(seqnames = probeAnno$chrm, strand = "*", ranges = IRanges(start = probeAnno$start, end = probeAnno$end), smokebetas)
+
+## count number of sites on EPIC array within these regions
+epicOverlap<-subsetByOverlaps(arrayData, targetGRanges)
+table(seqnames(epicOverlap))
+
+## compare the spacing profile
+intraDist<-NULL
+for(i in 1:length(targetGRanges)){
+	subCpGs<-allCpGs[which(as.character(seqnames(allCpGs)) == as.character(seqnames(targetGRanges)[i])),]
+	intraDist<-c(intraDist, width(gaps(allCpGs)))
+	## Need to add in distances between CpGs called in a single region
+	## calculate average distance	
+}
+
+
+
 
 overlapArray1<-findOverlaps(sam1, arrayData)
 overlapArray2<-findOverlaps(sam2, arrayData)
@@ -162,7 +142,6 @@ lines(errorMetrics.dnam[,1], errorMetrics.dnam[,5], lwd = 2)
 plot(errorMetrics.dnam[,1], errorMetrics.dnam[,3], xlab = "DNAm mean", ylab = "RMSE", type = "l", lwd = 2, ylim = c(0,0.18))
 lines(errorMetrics.dnam[,1], errorMetrics.dnam[,6], lwd = 2)
 dev.off()
-
 
 
 
