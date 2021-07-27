@@ -33,7 +33,10 @@ inTargets2<-subsetByOverlaps(sam2, targetGRanges)
 sharedSites<-findOverlaps(inTargets1, inTargets2)
 allCpGs<-union(inTargets1, inTargets2)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 638f31e2662b1d1498cd237a8809634e886c7425
 aggregate(inTargets1$nCpG, by = list(as.character(seqnames(inTargets1))), sum)
 aggregate(inTargets2$nCpG, by = list(as.character(seqnames(inTargets2))), sum)
 aggregate(inTargets1$nCpG[queryHits(sharedSites)], by = list(as.character(seqnames(inTargets1[queryHits(sharedSites)]))), sum)
@@ -51,6 +54,7 @@ epicOverlap<-subsetByOverlaps(arrayData, targetGRanges)
 table(seqnames(epicOverlap))
 
 ## compare the spacing profile
+<<<<<<< HEAD
 intraDist<-NULL
 for(i in 1:length(targetGRanges)){
 	subCpGs<-allCpGs[which(as.character(seqnames(allCpGs)) == as.character(seqnames(targetGRanges)[i])),]
@@ -62,6 +66,15 @@ for(i in 1:length(targetGRanges)){
 
 
 
+=======
+for(i in 1:length(targetGRanges)){
+	subCpGs<-allCpGs[which(as.character(seqnames(allCpGs)) == as.character(seqnames(targetGRanges)[i]),]
+	width(gaps(allCpGs))
+	
+}
+
+
+>>>>>>> 638f31e2662b1d1498cd237a8809634e886c7425
 overlapArray1<-findOverlaps(sam1, arrayData)
 overlapArray2<-findOverlaps(sam2, arrayData)
 

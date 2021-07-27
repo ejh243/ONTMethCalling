@@ -134,4 +134,8 @@ for(i in 1:length(targetGRanges)){
  
  for(i in 1:length(targetGRanges)){
 	print(sum(c(width(bamGranges1[[i]]),width(bamGranges2[[i]])) > 10000))
+<<<<<<< HEAD
  }
+=======
+ }
+>>>>>>> 638f31e2662b1d1498cd237a8809634e886c7425
