@@ -19,13 +19,28 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 genome <- BSgenome.Hsapiens.UCSC.hg38
 
 ## define target regions
-allGuides<-read.csv("../../Resources/SmokingEWAS/GuideRNAsFINAL.csv")
+allGuides<-read.csv("../Resources/SmokingEWAS/GuideRNAsFINAL.csv")
 
 targetRegions<-cbind(aggregate(allGuides$hg38, by = list(allGuides$Chr), min), aggregate(allGuides$hg38, by = list(allGuides$Chr), max)$x)
 	
 targetGRanges<-GRanges(seqnames = paste0("chr", targetRegions[,1]), strand = "*", ranges = IRanges(start = targetRegions[,2], end = targetRegions[,3]))
 
+## load chr stats
+samStats1<-read.table("../Aligned/ONT/FAN62113/FAN62113.sorted.filtered.primary.stats")
+samStats2<-read.table("../Aligned/ONT/FAO06764/FAO06764.sorted.filtered.primary.stats")
 
+pdf("Plots/BarplotChromosomeDistribution.pdf", width = 10, height = 6)
+
+barplot(samStats1[1:22,"V3"]+samStats2[1:22,"V3"], xlab = "chr", ylab = "Number of Reads", names = c(1:22))
+
+## calculate expected number of reads based on chr sizes
+totReads<-sum(samStats1[1:22,"V3"]+samStats2[1:22,"V3"])
+chrProps<-samStats1[1:22,"V2"]/sum(samStats1[1:22,"V2"])
+barplot(rbind(chrProps*totReads,samStats1[1:22,"V3"]+samStats2[1:22,"V3"]), beside = TRUE, xlab = "chr", ylab = "Number of Reads", names = c(1:22), col = c("grey", "darkred"))
+legend("topright", c("Expected", "Actual"), col = c("grey", "darkred"), pch = 15)
+dev.off()
+
+setwd("../Aligned/ONT")
 ## load coverage stats
 bedg1<-read.table("SumStats/FAN62113.bedg")
 bedg1<-GRanges(seqnames = bedg1$V1, strand = "*", ranges = IRanges(start = bedg1$V2, end = bedg1$V3), Depth = bedg1$V4)
@@ -114,7 +129,10 @@ for(i in 1:length(targetGRanges)){
 
 
 ## calculate mean coverage genome-wide
-(sum(width(bedg1)*bedg1$Depth)/sum(width(bedg1)) +sum(width(bedg2)*bedg2$Depth)/sum(width(bedg2)))/2
+mu<-(sum(width(bedg1)*bedg1$Depth)/sum(width(bedg1)) +sum(width(bedg2)*bedg2$Depth)/sum(width(bedg2)))/2
+## calculate the sd genome-wide
+
+sqrt(sum(c(((bedg1$Depth-mu)^2)*width(bedg1), ((bedg2$Depth-mu)^2)*width(bedg2)))/sum(c(width(bedg1), width(bedg2))))
 
 ## plot distribution of read lengths within each region
 pdf("Plots/HistogramReadLengthsPerTarget.pdf", height = 4, width = 12)
@@ -134,8 +152,28 @@ for(i in 1:length(targetGRanges)){
  
  for(i in 1:length(targetGRanges)){
 	print(sum(c(width(bamGranges1[[i]]),width(bamGranges2[[i]])) > 10000))
-<<<<<<< HEAD
  }
-=======
+ 
+ lengths(targetGRanges)
+# as a proportion of target region
+
+pdf("Plots/HistogramReadLengthsPerTargetProportionOfTarget.pdf", height = 4, width = 12)
+par(mfrow = c(1,3))
+for(i in 1:length(targetGRanges)){
+	hist(c(width(bamGranges1[[i]]),width(bamGranges2[[i]]))/lengths(targetGRanges)[i], main = paste0(as.character(seqnames(targetGRanges)[i]), ":", start(targetGRanges)[i], "-", end(targetGRanges)[i]), xlab = "Proportion of Target Region", ylab = "Number of reads", breaks = 20) 
+}
+dev.off()
+
+ for(i in 1:length(targetGRanges)){
+	print(mean(c(width(bamGranges1[[i]]),width(bamGranges2[[i]]))/lengths(targetGRanges)[i]))
  }
->>>>>>> 638f31e2662b1d1498cd237a8809634e886c7425
+ 
+ for(i in 1:length(targetGRanges)){
+	print(max(c(width(bamGranges1[[i]]),width(bamGranges2[[i]]))))
+ }
+ 
+ for(i in 1:length(targetGRanges)){
+	print(sum(c(width(bamGranges1[[i]]),width(bamGranges2[[i]])) > 10000))
+ }
+ 
+ 

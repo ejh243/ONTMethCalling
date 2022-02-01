@@ -33,6 +33,9 @@ do
     samtools index ${ALIGNEDDIR}/${id}/${id}.sorted.filtered.bam
 	samtools index ${ALIGNEDDIR}/${id}/${id}.sorted.filtered.primary.bam
 
+	## summarise reads per chr
+	samtools idxstats ${ALIGNEDDIR}/${id}/${id}.sorted.filtered.primary.bam > ${ALIGNEDDIR}/${id}/${id}.sorted.filtered.primary.stats
+	
     ## delete sam file
     rm ${ALIGNEDDIR}/${id}/${id}.sam
 	  
