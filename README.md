@@ -51,6 +51,10 @@ Takes nanopolish DNA methylation frequencys and compares to matched data generat
 
 Takes nanopolish DNA methylation frequencys and performs statistical comparision between samples. Compares these results to smoking EWAS from large population cohort. 
 
+7_plotMethylationPhasingTargetRegions.r
 
+Calculates D' statistics between pairs of sites within targetted regions and creates plots.
 
+8_plotMethylationPhasingSignificantRegions.r
 
+Calculates D' statistics between pairs of sites within regions with significant differentially methylated sites and creates plots.
