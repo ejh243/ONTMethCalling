@@ -2,7 +2,7 @@
 
 This repository contains scripts to call DNA methylation from ONT data and  perform statistical comparisions between a smoker and non-smoker. These scripts contain the analyses presented in 
 
-***Evaluation of nanopore sequencing for epigenetic epidemiology: a comparison with DNA methylation microarrays. Flynn et al. 2022*****
+***Robert Flynn, Sam Washer, Aaron R Jeffries, Alexandria Andrayas, Gemma Shireby, Meena Kumari, Leonard C Schalkwyk, Jonathan Mill, Eilis Hannon, Evaluation of nanopore sequencing for epigenetic epidemiology: a comparison with DNA methylation microarrays, Human Molecular Genetics, Volume 31, Issue 18, 15 September 2022, Pages 3181–3190, https://doi.org/10.1093/hmg/ddac112*****
 
 Notes:
 
